@@ -26,7 +26,7 @@ function App() {
       <header style={styles.header}>
         <div style={styles.headerContent}>
           <h1 style={styles.appTitle}>📋 מערכת חילוץ טופס 106</h1>
-          <p style={styles.appSubtitle}>הדבקת ידע בנושא מסים</p>
+          <p style={styles.appSubtitle}>🐕🐈 פולו ומרקו אוהבים מיסים🐈🐕</p>
         </div>
       </header>
 
