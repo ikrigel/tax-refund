@@ -205,23 +205,70 @@ sudo systemctl restart nginx
 
 ## 🌐 פריסת React Frontend
 
-### Option 1: Static Hosting (Vercel/Netlify)
+### Option 1: Vercel Deployment (Recommended)
+
+**שיטה א: דרך GitHub (מומלץ)**
+
+1. דחוף את הקוד ל-GitHub:
+```bash
+git push origin main
+```
+
+2. עבור ל-[vercel.com](https://vercel.com)
+3. לחץ `New Project`
+4. בחר את repository שלך
+5. בחר את `frontend` תיקיית בשדה `Root Directory`
+6. הוסף Environment Variables:
+   ```
+   REACT_APP_WEBHOOK_URL=https://your-n8n-domain.com/webhook/tax-refund
+   ```
+7. לחץ `Deploy`
+
+**שיטה ב: CLI Deployment**
 
 ```bash
+# התקן Vercel CLI
+npm install -g vercel
+
+# עבור לתיקיית frontend
 cd frontend
 
-# בנה את ייצור
-npm run build
+# התחבר לחשבון Vercel
+vercel login
 
-# ייצוא בquite
-# Vercel
-npm install -g vercel
-vercel
+# פריסה לייצור
+vercel --prod
 
-# או Netlify
-npm install -g netlify-cli
-netlify deploy --prod --dir=dist
+# בחר את project ואשר את ההגדרות
 ```
+
+**בדיקת פריסה**:
+```bash
+# בדוק את ה-Vercel logs אם 404
+# בוודאות ש:
+# 1. Root Directory: frontend
+# 2. Build Command: npm run build
+# 3. Output Directory: dist
+# 4. Framework Preset: Vite
+```
+
+### Option 2: Netlify Deployment
+
+```bash
+# התקן Netlify CLI
+npm install -g netlify-cli
+
+# התחבר
+netlify login
+
+# עבור לתיקיית frontend
+cd frontend
+
+# פריסה
+netlify deploy --prod
+```
+
+### Option 3: Static Hosting (Vercel/Netlify)
 
 ### Option 2: Docker Container
 
@@ -461,6 +508,44 @@ n8n import:workflow < /backup/workflows.json
 - [ ] End-to-end testing passed
 
 ## 🆘 Troubleshooting
+
+### Vercel 404: NOT_FOUND Error
+
+**בעיה**: Frontend מוצג כ-404 לאחר פריסה ל-Vercel
+
+**פתרונות**:
+
+1. **בדוק את Root Directory**:
+   - עבור לפרויקט ב-Vercel Dashboard
+   - Settings → General
+   - וודא `Root Directory` מוגדר כ-`frontend`
+
+2. **בדוק Build Settings**:
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Framework Preset: `Vite`
+
+3. **בדוק Environment Variables**:
+   - וודא `REACT_APP_WEBHOOK_URL` מוגדר
+   - Format: `https://your-domain.com/webhook/tax-refund`
+
+4. **View Build Logs**:
+   - Deployments tab בעברית
+   - בחר את ה-deployment הכושל
+   - ראה את ה-build output
+
+5. **Redeploy**:
+   ```bash
+   # בעברית
+   cd frontend
+   vercel --prod --force
+   ```
+
+6. **אם עדיין לא עובד - בדוק את קבצים אלה**:
+   - `frontend/vercel.json` - צריך להיות בתיקיית frontend
+   - `frontend/package.json` - צריך לכלול `"build": "vite build"`
+   - `frontend/vite.config.js` - צריך `outDir: 'dist'`
+   - `frontend/index.html` - צריך להיות בתיקיית frontend
 
 ### n8n won't start
 ```bash
