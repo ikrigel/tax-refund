@@ -1,0 +1,353 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -200,
+        0
+      ],
+      "id": "webhook_receive_form",
+      "name": "קבלת_טופס_106_מהאתר"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "text": "Analyze this Israeli tax Form 106 (טופס 106) and extract ALL available information in JSON format.\n\nRequired fields:\n- tax_year: The tax year (string)\n- employee_id: Employee ID number (תעודת זהות)\n- employee_name: Full employee name\n- employer_id: Employer ID/company number\n- employer_name: Employer name\n- total_income: Total gross income (הכנסה ברוטו)\n- total_tax_paid: Total tax deducted (מס שנוכה)\n\nAdditional fields (extract if available):\n- tax_credit_points: Number of tax credit points (נקודות זיכוי)\n- monthly_income: Array of monthly income amounts\n- national_insurance: National insurance payments (ביטוח לאומי)\n- health_insurance: Health insurance payments (ביטוח בריאות)\n- pension_employee: Employee pension contributions (פנסיה - עובד)\n- pension_employer: Employer pension contributions (פנסיה - מעסיק)\n- training_fund: Training fund contributions (קרן השתלמות)\n- severance_fund: Severance fund (פיצויים)\n- work_days: Number of work days\n- work_months: Number of work months\n- address: Employee address\n- phone: Phone number\n\nReturn ONLY valid JSON. If a field is not found, use null. Do not add explanations.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "gemini_analyze_document",
+      "name": "ניתוח_וחילוץ_נתונים_מטופס_106",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "parse_json",
+              "name": "extracted_data",
+              "value": "={{ JSON.parse($json.response || $json.text || '{}') }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        200,
+        0
+      ],
+      "id": "parse_gemini_response",
+      "name": "המרת_תשובת_AI_ל_JSON"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tax_year",
+              "name": "tax_year",
+              "value": "={{ $json.extracted_data.tax_year }}",
+              "type": "string"
+            },
+            {
+              "id": "employee_name",
+              "name": "employee_name",
+              "value": "={{ $json.extracted_data.employee_name || null }}",
+              "type": "string"
+            },
+            {
+              "id": "employee_id",
+              "name": "employee_id",
+              "value": "={{ $json.extracted_data.employee_id || null }}",
+              "type": "string"
+            },
+            {
+              "id": "employer_name",
+              "name": "employer_name",
+              "value": "={{ $json.extracted_data.employer_name || null }}",
+              "type": "string"
+            },
+            {
+              "id": "employer_id",
+              "name": "employer_id",
+              "value": "={{ $json.extracted_data.employer_id || null }}",
+              "type": "string"
+            },
+            {
+              "id": "total_income",
+              "name": "total_income",
+              "value": "={{ $json.extracted_data.total_income || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "total_tax_paid",
+              "name": "total_tax_paid",
+              "value": "={{ $json.extracted_data.total_tax_paid || 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "validation_required_fields",
+              "name": "has_required_fields",
+              "value": "={{ $json.tax_year && $json.total_income > 0 }}",
+              "type": "boolean"
+            },
+            {
+              "id": "validation_income",
+              "name": "income_is_valid",
+              "value": "={{ $json.total_income > 0 }}",
+              "type": "boolean"
+            },
+            {
+              "id": "validation_tax_paid",
+              "name": "tax_paid_is_valid",
+              "value": "={{ $json.total_tax_paid >= 0 }}",
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        400,
+        0
+      ],
+      "id": "validate_required_fields",
+      "name": "בדיקת_שדות_חובה"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "check_required",
+              "leftValue": "={{ $json.has_required_fields }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "check_income",
+              "leftValue": "={{ $json.income_is_valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "check_tax_paid",
+              "leftValue": "={{ $json.tax_paid_is_valid }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        600,
+        0
+      ],
+      "id": "validation_check",
+      "name": "בדיקת_תקינות"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "response_object",
+              "name": "response",
+              "value": "{\"status\": \"success\", \"data\": {\"tax_year\": \"{{ $json.tax_year }}\", \"employee\": {\"name\": \"{{ $json.employee_name }}\", \"id\": \"{{ $json.employee_id }}\", \"address\": \"{{ $json.extracted_data.address }}\", \"phone\": \"{{ $json.extracted_data.phone }}\"}, \"employer\": {\"name\": \"{{ $json.employer_name }}\", \"id\": \"{{ $json.employer_id }}\"}, \"income\": {\"total\": {{ $json.total_income }}, \"monthly\": {{ JSON.stringify($json.extracted_data.monthly_income || null) }}}, \"tax\": {\"total_paid\": {{ $json.total_tax_paid }}, \"credit_points\": {{ $json.extracted_data.tax_credit_points || null }}}, \"deductions\": {\"national_insurance\": {{ $json.extracted_data.national_insurance || null }}, \"health_insurance\": {{ $json.extracted_data.health_insurance || null }}, \"pension_employee\": {{ $json.extracted_data.pension_employee || null }}, \"pension_employer\": {{ $json.extracted_data.pension_employer || null }}, \"training_fund\": {{ $json.extracted_data.training_fund || null }}, \"severance_fund\": {{ $json.extracted_data.severance_fund || null }}}, \"work_period\": {\"days\": {{ $json.extracted_data.work_days || null }}, \"months\": {{ $json.extracted_data.work_months || null }}}}, \"extracted_at\": \"{{ $now.toISO() }}\"}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        -100
+      ],
+      "id": "build_success_response",
+      "name": "בניית_תשובה_מלאה"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "error_response",
+              "name": "response",
+              "value": "{\"status\": \"error\", \"error\": {\"code\": \"VALIDATION_FAILED\", \"message\": \"הטופס לא עבר את הולידציה הבסיסית\", \"details\": {\"has_required_fields\": {{ $json.has_required_fields }}, \"income_valid\": {{ $json.income_is_valid }}, \"tax_paid_valid\": {{ $json.tax_paid_is_valid }}, \"extracted_data\": {{ JSON.stringify($json.extracted_data || {}) }}}}, \"extracted_at\": \"{{ $now.toISO() }}\"}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        100
+      ],
+      "id": "build_error_response",
+      "name": "בניית_תשובת_שגיאה"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1000,
+        0
+      ],
+      "id": "respond_to_webhook",
+      "name": "החזרת_תוצאה_ללקוח"
+    }
+  ],
+  "connections": {
+    "קבלת_טופס_106_מהאתר": {
+      "main": [
+        [
+          {
+            "node": "ניתוח_וחילוץ_נתונים_מטופס_106",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ניתוח_וחילוץ_נתונים_מטופס_106": {
+      "main": [
+        [
+          {
+            "node": "המרת_תשובת_AI_ל_JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "המרת_תשובת_AI_ל_JSON": {
+      "main": [
+        [
+          {
+            "node": "בדיקת_שדות_חובה",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "בדיקת_שדות_חובה": {
+      "main": [
+        [
+          {
+            "node": "בדיקת_תקינות",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "בדיקת_תקינות": {
+      "main": [
+        [
+          {
+            "node": "בניית_תשובה_מלאה",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "בניית_תשובת_שגיאה",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "בניית_תשובה_מלאה": {
+      "main": [
+        [
+          {
+            "node": "החזרת_תוצאה_ללקוח",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "בניית_תשובת_שגיאה": {
+      "main": [
+        [
+          {
+            "node": "החזרת_תוצאה_ללקוח",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}
