@@ -4,7 +4,7 @@
  */
 
 class TaxRefundAPI {
-  constructor(webhookUrl = process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:5678/webhook/tax-refund') {
+  constructor(webhookUrl = import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/tax-refund') {
     this.webhookUrl = webhookUrl;
   }
 
