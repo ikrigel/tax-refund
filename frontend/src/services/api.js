@@ -4,8 +4,22 @@
  */
 
 class TaxRefundAPI {
-  constructor(webhookUrl = import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/tax-refund') {
+  constructor(
+    webhookUrl = import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/tax-refund',
+    corsProxy = import.meta.env.VITE_CORS_PROXY || ''
+  ) {
     this.webhookUrl = webhookUrl;
+    this.corsProxy = corsProxy;
+  }
+
+  /**
+   * Get the URL to use for the request (with proxy if needed)
+   */
+  getRequestUrl() {
+    if (this.corsProxy) {
+      return this.corsProxy + this.webhookUrl;
+    }
+    return this.webhookUrl;
   }
 
   /**
@@ -26,9 +40,10 @@ class TaxRefundAPI {
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch(this.webhookUrl, {
+      const response = await fetch(this.getRequestUrl(), {
         method: 'POST',
         body: formData,
+        mode: 'cors',
         headers: {
           'Accept': 'application/json',
         },
