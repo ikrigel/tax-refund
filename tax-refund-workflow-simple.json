@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-200, 0],
+      "id": "webhook_receive_form",
+      "name": "קבלת_טופס_106_מהאתר"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "text": "Analyze this Israeli tax Form 106 (טופס 106) and extract ALL available information in JSON format.\n\nRequired fields:\n- tax_year: The tax year (string)\n- employee_id: Employee ID number (תעודת זהות)\n- employee_name: Full employee name\n- employer_id: Employer ID/company number\n- employer_name: Employer name\n- total_income: Total gross income (הכנסה ברוטו)\n- total_tax_paid: Total tax deducted (מס שנוכה)\n\nAdditional fields (extract if available):\n- tax_credit_points: Number of tax credit points (נקודות זיכוי)\n- monthly_income: Array of monthly income amounts\n- national_insurance: National insurance payments (ביטוח לאומי)\n- health_insurance: Health insurance payments (ביטוח בריאות)\n- pension_employee: Employee pension contributions (פנסיה - עובד)\n- pension_employer: Employer pension contributions (פנסיה - מעסיק)\n- training_fund: Training fund contributions (קרן השתלמות)\n- severance_fund: Severance fund (פיצויים)\n- work_days: Number of work days\n- work_months: Number of work months\n- address: Employee address\n- phone: Phone number\n\nReturn ONLY valid JSON. If a field is not found, use null. Do not add explanations.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "id": "gemini_analyze_document",
+      "name": "ניתוח_וחילוץ_נתונים_מטופס_106",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "parse_json",
+              "name": "extracted_data",
+              "value": "={{ JSON.parse($json.response || $json.text || '{}') }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [200, 0],
+      "id": "parse_gemini_response",
+      "name": "המרת_תשובת_AI_ל_JSON"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "final_response",
+              "name": "response",
+              "value": "={{ { status: 'success', data: { tax_year: $json.extracted_data.tax_year, employee: { name: $json.extracted_data.employee_name, id: $json.extracted_data.employee_id, address: $json.extracted_data.address, phone: $json.extracted_data.phone }, employer: { name: $json.extracted_data.employer_name, id: $json.extracted_data.employer_id }, income: { total: $json.extracted_data.total_income, monthly: $json.extracted_data.monthly_income }, tax: { total_paid: $json.extracted_data.total_tax_paid, credit_points: $json.extracted_data.tax_credit_points }, deductions: { national_insurance: $json.extracted_data.national_insurance, health_insurance: $json.extracted_data.health_insurance, pension_employee: $json.extracted_data.pension_employee, pension_employer: $json.extracted_data.pension_employer, training_fund: $json.extracted_data.training_fund, severance_fund: $json.extracted_data.severance_fund }, work_period: { days: $json.extracted_data.work_days, months: $json.extracted_data.work_months } }, extracted_at: new Date().toISOString() } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [400, 0],
+      "id": "build_final_response",
+      "name": "בניית_תשובה_סופית"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [600, 0],
+      "id": "respond_to_webhook",
+      "name": "החזרת_תוצאה_ללקוח"
+    }
+  ],
+  "connections": {
+    "קבלת_טופס_106_מהאתר": {
+      "main": [[{"node": "ניתוח_וחילוץ_נתונים_מטופס_106", "type": "main", "index": 0}]]
+    },
+    "ניתוח_וחילוץ_נתונים_מטופס_106": {
+      "main": [[{"node": "המרת_תשובת_AI_ל_JSON", "type": "main", "index": 0}]]
+    },
+    "המרת_תשובת_AI_ל_JSON": {
+      "main": [[{"node": "בניית_תשובה_סופית", "type": "main", "index": 0}]]
+    },
+    "בניית_תשובה_סופית": {
+      "main": [[{"node": "החזרת_תוצאה_ללקוח", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}
