@@ -1,6 +1,7 @@
 /**
  * API client for n8n tax refund extraction workflow
  * Handles communication with the webhook endpoint
+ * Environment variables from Vite: VITE_WEBHOOK_URL, VITE_CORS_PROXY
  */
 
 class TaxRefundAPI {
@@ -10,6 +11,10 @@ class TaxRefundAPI {
   ) {
     this.webhookUrl = webhookUrl;
     this.corsProxy = corsProxy;
+    // Log for debugging (remove in production)
+    if (typeof window !== 'undefined') {
+      console.log('[TaxRefundAPI] Webhook URL:', this.webhookUrl);
+    }
   }
 
   /**

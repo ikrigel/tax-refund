@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir \"c:\\\\Users\\\\ikrig\\\\Documents\\\\מיישם AI\\\\מערכת לבדיקת החזרי מס\")",
+      "Bash(git init:*)",
+      "Bash(git config:*)"
+    ]
+  }
+}
