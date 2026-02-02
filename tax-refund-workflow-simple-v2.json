@@ -1,0 +1,137 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "webhook_node",
+      "name": "Webhook - Receive PDF"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "text": "This is an Israeli Form 106 (טופס 106) tax document. Extract and return ONLY this JSON structure with extracted values:\n\n{\n  \"tax_year\": \"2024\",\n  \"employee_name\": \"extracted name\",\n  \"employee_id\": \"extracted ID\",\n  \"employer_name\": \"company name\",\n  \"employer_id\": \"employer ID\",\n  \"total_income\": 0,\n  \"total_tax_paid\": 0,\n  \"tax_credit_points\": 0,\n  \"work_months\": 0,\n  \"training_fund\": 0,\n  \"pension_employee\": 0,\n  \"pension_employer\": 0\n}\n\nDo NOT include any text before or after the JSON. Return ONLY valid JSON.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [200, 0],
+      "id": "gemini_node",
+      "name": "Gemini - Extract Form 106",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field_1",
+              "name": "response_text",
+              "value": "={{ $json.text || $json.response || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [400, 0],
+      "id": "extract_response",
+      "name": "Extract Response"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field_1",
+              "name": "data",
+              "value": "={{ JSON.parse($json.response_text) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [550, 0],
+      "id": "parse_json",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field_1",
+              "name": "response",
+              "value": "={{ { status: 'success', data: $json.data, extracted_at: new Date().toISOString() } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 0],
+      "id": "final_response",
+      "name": "Build Final Response"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [850, 0],
+      "id": "respond_node",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook - Receive PDF": {
+      "main": [[{"node": "Gemini - Extract Form 106", "type": "main", "index": 0}]]
+    },
+    "Gemini - Extract Form 106": {
+      "main": [[{"node": "Extract Response", "type": "main", "index": 0}]]
+    },
+    "Extract Response": {
+      "main": [[{"node": "Parse JSON", "type": "main", "index": 0}]]
+    },
+    "Parse JSON": {
+      "main": [[{"node": "Build Final Response", "type": "main", "index": 0}]]
+    },
+    "Build Final Response": {
+      "main": [[{"node": "Respond to Webhook", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}

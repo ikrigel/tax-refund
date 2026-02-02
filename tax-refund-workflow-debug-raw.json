@@ -1,0 +1,89 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "webhook_node",
+      "name": "Webhook - Receive PDF"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "text": "Extract Form 106 data and return JSON",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [200, 0],
+      "id": "gemini_node",
+      "name": "Gemini Extract",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field_1",
+              "name": "response",
+              "value": "={{ { status: 'debug', raw_gemini_output: $json, all_keys: Object.keys($json) } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [400, 0],
+      "id": "show_raw",
+      "name": "Show Raw Output"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [550, 0],
+      "id": "respond_node",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook - Receive PDF": {
+      "main": [[{"node": "Gemini Extract", "type": "main", "index": 0}]]
+    },
+    "Gemini Extract": {
+      "main": [[{"node": "Show Raw Output", "type": "main", "index": 0}]]
+    },
+    "Show Raw Output": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}

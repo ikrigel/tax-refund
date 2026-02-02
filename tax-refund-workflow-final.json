@@ -1,0 +1,113 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "webhook_receive_form",
+      "name": "Receive Form 106 PDF"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "text": "You are an Israeli tax expert. Analyze this Form 106 (טופס 106) PDF and extract ALL data as valid JSON.\n\nReturn ONLY JSON, no other text.\n\nExtract these fields:\n- tax_year: Tax year from form (e.g. '2024')\n- employee_name: Employee first and last name\n- employee_id: Employee ID number (תעודת זהות)\n- employer_name: Employer/company name\n- employer_id: Employer deduction case number (מס' תיק ניכויים)\n- total_income: Total salary/wages (משכורת ותשלומים)\n- total_tax_paid: Total tax deductions (סה''כ ניכויי מס)\n- tax_credit_points: Tax credit points (נקודות זיכוי)\n- work_months: Number of work months\n- training_fund: Training fund contribution (קרן השתלמות)\n- pension_employee: Employee pension (פנסיה עובד)\n- pension_employer: Employer pension (פנסיה מעסיק)\n- national_insurance: National insurance paid\n- health_insurance: Health insurance paid\n- severance_fund: Severance fund\n\nFor any field not found, use null.\nReturn ONLY valid JSON object, nothing else.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [200, 0],
+      "id": "gemini_extract",
+      "name": "Extract Form 106 Data with Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "parse_response",
+              "name": "extracted_data",
+              "value": "={{ JSON.parse($json.text || $json.response || '{}') }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [400, 0],
+      "id": "parse_json",
+      "name": "Parse JSON Response"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "build_response",
+              "name": "response",
+              "value": "={{ { status: 'success', data: $json.extracted_data, extracted_at: new Date().toISOString() } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [600, 0],
+      "id": "build_response",
+      "name": "Build Final Response"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [800, 0],
+      "id": "respond",
+      "name": "Return Response to Client"
+    }
+  ],
+  "connections": {
+    "Receive Form 106 PDF": {
+      "main": [[{"node": "Extract Form 106 Data with Gemini", "type": "main", "index": 0}]]
+    },
+    "Extract Form 106 Data with Gemini": {
+      "main": [[{"node": "Parse JSON Response", "type": "main", "index": 0}]]
+    },
+    "Parse JSON Response": {
+      "main": [[{"node": "Build Final Response", "type": "main", "index": 0}]]
+    },
+    "Build Final Response": {
+      "main": [[{"node": "Return Response to Client", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "webhook_receive_form",
+      "name": "Receive Form 106 PDF"
+    },
+    {
+      "parameters": {
+        "language": "javascript",
+        "mode": "runOnceForAllItems",
+        "code": "// Debug: Check what data we received\nconst items = $input.getInputData();\nconst result = [];\n\nfor (let item of items) {\n  const binaryData = item.binary?.file;\n  \n  if (!binaryData) {\n    return [{\n      json: {\n        error: 'No file received',\n        received: Object.keys(item),\n        binary_keys: Object.keys(item.binary || {})\n      }\n    }];\n  }\n  \n  result.push({\n    json: {\n      filename: binaryData.fileName || 'unknown',\n      mimetype: binaryData.mimeType || 'unknown',\n      file_exists: true,\n      file_size: binaryData.data?.length || 0,\n      // For Gemini, we'll keep the binary reference intact\n      // Just pass it through with metadata\n      ready_for_gemini: true\n    },\n    binary: {\n      file: binaryData\n    }\n  });\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [150, 0],
+      "id": "debug_file",
+      "name": "Debug: Check File Received"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "text": "Extract Form 106 tax data from this PDF and return ONLY JSON:\n{\n  \"tax_year\": \"\",\n  \"employee_name\": \"\",\n  \"employee_id\": \"\",\n  \"employer_name\": \"\",\n  \"total_income\": 0,\n  \"total_tax_paid\": 0,\n  \"tax_credit_points\": 0,\n  \"work_months\": 0\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [300, 0],
+      "id": "gemini_extract",
+      "name": "Extract with Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "parse_result",
+              "name": "data",
+              "value": "={{ JSON.parse($json.text || $json.response || '{}') }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [450, 0],
+      "id": "parse_json",
+      "name": "Parse Response"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "response",
+              "name": "response",
+              "value": "={{ { status: 'success', data: $json.data, extracted_at: new Date().toISOString() } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [600, 0],
+      "id": "build_response",
+      "name": "Build Response"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [750, 0],
+      "id": "respond",
+      "name": "Return to Client"
+    }
+  ],
+  "connections": {
+    "Receive Form 106 PDF": {
+      "main": [[{"node": "Debug: Check File Received", "type": "main", "index": 0}]]
+    },
+    "Debug: Check File Received": {
+      "main": [[{"node": "Extract with Gemini", "type": "main", "index": 0}]]
+    },
+    "Extract with Gemini": {
+      "main": [[{"node": "Parse Response", "type": "main", "index": 0}]]
+    },
+    "Parse Response": {
+      "main": [[{"node": "Build Response", "type": "main", "index": 0}]]
+    },
+    "Build Response": {
+      "main": [[{"node": "Return to Client", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tax-refund",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "webhook_node",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "inputType": "binary",
+        "text": "You are analyzing an Israeli Form 106 (טופס 106) tax document. Extract ONLY the following fields and return as JSON object:\n- tax_year\n- employee_name\n- employee_id\n- employer_name\n- employer_id\n- total_income\n- total_tax_paid\n- tax_credit_points\n- work_months\n\nReturn ONLY valid JSON with these fields. Use null for missing fields.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [200, 0],
+      "id": "gemini_node",
+      "name": "Gemini - Extract Form 106",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
+          "name": "Google Gemini API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extract_text",
+              "name": "response_text",
+              "value": "={{ $json.text || $json.response || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "all_keys",
+              "name": "all_keys",
+              "value": "={{ Object.keys($json) }}",
+              "type": "array"
+            },
+            {
+              "id": "full_response",
+              "name": "full_json",
+              "value": "={{ $json }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [400, 0],
+      "id": "get_response",
+      "name": "Get Response"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "parse",
+              "name": "data",
+              "value": "={{ $json.response_text && $json.response_text.length > 0 ? JSON.parse($json.response_text) : null }}",
+              "type": "object"
+            },
+            {
+              "id": "text_length",
+              "name": "response_length",
+              "value": "={{ $json.response_text ? $json.response_text.length : 0 }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [550, 0],
+      "id": "parse_json",
+      "name": "Parse JSON"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "response",
+              "name": "response",
+              "value": "={{ { status: 'success', data: $json.data, debug: { raw_text: $json.response_text, text_length: $json.response_length, text_preview: $json.response_text ? $json.response_text.substring(0, 200) : 'empty', gemini_keys: $json.all_keys, full_gemini_response: $json.full_json }, extracted_at: new Date().toISOString() } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [700, 0],
+      "id": "build_response",
+      "name": "Build Response"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [850, 0],
+      "id": "respond",
+      "name": "Respond"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Gemini - Extract Form 106", "type": "main", "index": 0}]]
+    },
+    "Gemini - Extract Form 106": {
+      "main": [[{"node": "Get Response", "type": "main", "index": 0}]]
+    },
+    "Get Response": {
+      "main": [[{"node": "Parse JSON", "type": "main", "index": 0}]]
+    },
+    "Parse JSON": {
+      "main": [[{"node": "Build Response", "type": "main", "index": 0}]]
+    },
+    "Build Response": {
+      "main": [[{"node": "Respond", "type": "main", "index": 0}]]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "tax-refund-extraction-system"
+  }
+}
