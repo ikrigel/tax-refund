@@ -104,7 +104,6 @@ export const ResultsDisplay = ({ data, extractedAt, onClear }) => {
             <Row label="חודשי עבודה" value={data.work_period.months ? formatNumber(data.work_period.months) : 'לא זמין'} />
           </Section>
         )}
-      </div>
 
         {/* Notes */}
         {data.notes && data.notes.length > 0 && (
@@ -120,7 +119,7 @@ export const ResultsDisplay = ({ data, extractedAt, onClear }) => {
 
       <div style={styles.footer}>
         <p style={styles.footerText}>
-          הנתונים חוצלו באמצעות OCR ו-AI. אנא בדוק את הנתונים לדיוק.
+          הנתונים חולצו באמצעות OCR ו-AI. אנא בדוק את הנתונים לדיוק.
         </p>
       </div>
     </div>

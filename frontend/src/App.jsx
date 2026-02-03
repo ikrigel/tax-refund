@@ -39,7 +39,7 @@ function App() {
         <div style={styles.headerContent}>
           <div style={styles.headerTop}>
             <div>
-              <h1 style={styles.appTitle}>📋 מערכת חילוץ טופס 106</h1>
+              <h1 style={styles.appTitle}>📋 מערכת חישוב החזרי מיסים מטופס 106</h1>
               <p style={styles.appSubtitle}>🐕🐈 פולו ומרקו אוהבים מיסים🐈🐕</p>
             </div>
             <button
@@ -119,7 +119,7 @@ function App() {
 
       <footer style={styles.footer}>
         <p style={styles.footerText}>
-          © 2024 מערכת חילוץ טופס 106 | טכנולוגיות n8n ו-React
+          © 2024 מערכת חישוב החזרי מיסים מטופס 106 | טכנולוגיות n8n ו-React
         </p>
       </footer>
 
