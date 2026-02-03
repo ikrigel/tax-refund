@@ -79,7 +79,15 @@ class TaxRefundAPI {
         throw new Error(error.error?.message || `HTTP ${response.status}`);
       }
 
-      return await response.json();
+      let data = await response.json();
+
+      // Handle n8n array wrapper - if response is array with single item, unwrap it
+      if (Array.isArray(data) && data.length > 0 && data[0].response) {
+        data = data[0].response;
+      }
+
+      console.log('[TaxRefundAPI] Received data:', data);
+      return data;
     } catch (error) {
       if (error instanceof TypeError) {
         throw new Error('Network error - ensure webhook URL is correct and CORS is enabled');
