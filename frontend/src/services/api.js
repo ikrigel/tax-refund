@@ -83,16 +83,22 @@ class TaxRefundAPI {
 
       console.log('[TaxRefundAPI] Raw response:', JSON.stringify(data).substring(0, 200));
 
-      // Handle n8n array wrapper - if response is array with single item, unwrap it
+      // Handle n8n response wrapper - unwrap if needed
+      // Case 1: Array wrapper [{ response: {...} }]
       if (Array.isArray(data) && data.length > 0) {
         console.log('[TaxRefundAPI] Response is array, checking for wrapper...');
         if (data[0].response) {
-          console.log('[TaxRefundAPI] Found response property, unwrapping...');
+          console.log('[TaxRefundAPI] Found response property in array[0], unwrapping...');
           data = data[0].response;
         } else if (data[0].status) {
-          console.log('[TaxRefundAPI] Found status at [0], using first item...');
+          console.log('[TaxRefundAPI] Found status at array[0], using first item...');
           data = data[0];
         }
+      }
+      // Case 2: Direct object wrapper { response: {...} }
+      else if (data && data.response && !data.status && typeof data.response === 'object') {
+        console.log('[TaxRefundAPI] Found response property at top level, unwrapping...');
+        data = data.response;
       }
 
       console.log('[TaxRefundAPI] Processed data:', data);
