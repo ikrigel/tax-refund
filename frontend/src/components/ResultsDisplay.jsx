@@ -15,7 +15,7 @@ export const ResultsDisplay = ({ data, extractedAt, onClear }) => {
       </div>
 
       <div style={styles.timestamp}>
-        עובד: {extractedAt && formatDate(extractedAt)}
+        חולץ: {extractedAt && formatDate(extractedAt)}
       </div>
 
       <div style={styles.sections}>
@@ -23,6 +23,33 @@ export const ResultsDisplay = ({ data, extractedAt, onClear }) => {
         <Section title="שנת המס">
           <Row label="שנה" value={data.tax_year} />
         </Section>
+
+        {/* Income and Tax Summary */}
+        <Section title="הכנסה ומס">
+          <Row label="סה״כ הכנסה ברוטו" value={formatCurrency(data.total_taxable_income)} />
+          <Row label="סה״כ מס שנוכה" value={formatCurrency(data.total_tax_withheld)} />
+          {data.weighted_credit_points && (
+            <Row label="נקודות זיכוי משוקללות" value={formatNumber(data.weighted_credit_points)} />
+          )}
+          {data.yearly_credit_used && (
+            <Row label="זיכוי שנתי משמש" value={formatCurrency(data.yearly_credit_used)} />
+          )}
+        </Section>
+
+        {/* Tax Calculation Results */}
+        {data.gross_tax_estimated !== undefined && (
+          <Section title="חישוב מס הכנסה">
+            <Row label="מס ברוטו משוער" value={formatCurrency(data.gross_tax_estimated)} />
+            <Row label="מס נקי משוער" value={formatCurrency(data.net_tax_estimated)} />
+            <Row label="הוצאה/החזר משוערים" value={formatCurrency(data.refund_estimated)} />
+            {data.refund_direction && (
+              <Row
+                label="כיוון ההחזר"
+                value={getRefundDirection(data.refund_direction)}
+              />
+            )}
+          </Section>
+        )}
 
         {/* Employee Info */}
         {data.employee && (
@@ -79,6 +106,18 @@ export const ResultsDisplay = ({ data, extractedAt, onClear }) => {
         )}
       </div>
 
+        {/* Notes */}
+        {data.notes && data.notes.length > 0 && (
+          <Section title="הערות">
+            {data.notes.map((note, idx) => (
+              <div key={idx} style={styles.noteItem}>
+                {note}
+              </div>
+            ))}
+          </Section>
+        )}
+      </div>
+
       <div style={styles.footer}>
         <p style={styles.footerText}>
           הנתונים חוצלו באמצעות OCR ו-AI. אנא בדוק את הנתונים לדיוק.
@@ -108,6 +147,15 @@ const hasDeductions = (deductions) => {
 
 const hasWorkPeriod = (period) => {
   return period.days !== null || period.months !== null;
+};
+
+const getRefundDirection = (direction) => {
+  const directionMap = {
+    'refund': '✅ החזר כספי',
+    'pay_more': '⚠️ תשלום נוסף',
+    'none': '➖ אין הבדל'
+  };
+  return directionMap[direction] || direction;
 };
 
 const styles = {
@@ -179,6 +227,15 @@ const styles = {
     color: '#666',
     textAlign: 'left',
     direction: 'ltr',
+  },
+  noteItem: {
+    padding: '0.75rem',
+    backgroundColor: '#f9f9f9',
+    borderLeft: '3px solid #1976d2',
+    marginBottom: '0.5rem',
+    fontSize: '0.9rem',
+    color: '#444',
+    lineHeight: '1.4',
   },
   footer: {
     marginTop: '1.5rem',
