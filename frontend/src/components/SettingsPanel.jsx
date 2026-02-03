@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 /**
  * Settings Panel component - allows users to configure API providers and endpoints
@@ -7,24 +7,59 @@ import { useState } from 'react';
 export function SettingsPanel({ settings, onUpdateSettings, onClose }) {
   const [activeTab, setActiveTab] = useState(settings.provider);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [n8nUrls, setN8nUrls] = useState({
+    production: '',
+    test: '',
+  });
+
+  // Load URLs from localStorage on mount
+  useEffect(() => {
+    const savedUrls = localStorage.getItem('n8nUrls');
+    if (savedUrls) {
+      setN8nUrls(JSON.parse(savedUrls));
+    }
+  }, []);
 
   const handleProviderChange = (provider) => {
     setActiveTab(provider);
     onUpdateSettings({ ...settings, provider });
   };
 
-  const handleN8nUrlChange = (url) => {
+  const handleN8nEnvChange = (env) => {
+    // Update current URL based on selected environment
+    const urlToUse = n8nUrls[env] || settings.n8n.url;
     onUpdateSettings({
       ...settings,
-      n8n: { ...settings.n8n, url },
+      n8n: { ...settings.n8n, environment: env, url: urlToUse },
     });
   };
 
-  const handleN8nEnvChange = (env) => {
-    onUpdateSettings({
-      ...settings,
-      n8n: { ...settings.n8n, environment: env },
-    });
+  const handleN8nUrlChange = (env, url) => {
+    setN8nUrls({ ...n8nUrls, [env]: url });
+  };
+
+  const handleSaveUrls = () => {
+    localStorage.setItem('n8nUrls', JSON.stringify(n8nUrls));
+    // Update current URL based on active environment
+    const currentUrl = n8nUrls[settings.n8n.environment];
+    if (currentUrl) {
+      onUpdateSettings({
+        ...settings,
+        n8n: { ...settings.n8n, url: currentUrl },
+      });
+    }
+    alert('URLs saved successfully!');
+  };
+
+  const handleLoadUrls = () => {
+    const savedUrls = localStorage.getItem('n8nUrls');
+    if (savedUrls) {
+      const urls = JSON.parse(savedUrls);
+      setN8nUrls(urls);
+      alert('URLs loaded from storage!');
+    } else {
+      alert('No saved URLs found in storage');
+    }
   };
 
   const handlePerplexityKeyChange = (key) => {
@@ -104,23 +139,40 @@ export function SettingsPanel({ settings, onUpdateSettings, onClose }) {
                 </div>
 
                 <div style={styles.formGroup}>
-                  <label style={styles.label}>Webhook URL:</label>
+                  <label style={styles.label}>Production URL:</label>
                   <input
                     type="url"
-                    value={settings.n8n.url}
-                    onChange={(e) => handleN8nUrlChange(e.target.value)}
+                    value={n8nUrls.production}
+                    onChange={(e) => handleN8nUrlChange('production', e.target.value)}
                     style={styles.input}
-                    placeholder="https://your-n8n-instance.com/webhook/tax-refund"
+                    placeholder="https://your-production-instance.app.n8n.cloud/webhook/tax-refund"
                   />
                   <p style={styles.hint}>
-                    Your n8n webhook endpoint for Form 106 extraction
+                    Your production n8n webhook endpoint
                   </p>
                 </div>
 
-                <div style={styles.infoBox}>
-                  <p style={styles.infoText}>
-                    ℹ️ Default: {import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/tax-refund'}
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Test URL:</label>
+                  <input
+                    type="url"
+                    value={n8nUrls.test}
+                    onChange={(e) => handleN8nUrlChange('test', e.target.value)}
+                    style={styles.input}
+                    placeholder="https://your-test-instance.app.n8n.cloud/webhook/tax-refund"
+                  />
+                  <p style={styles.hint}>
+                    Your test n8n webhook endpoint
                   </p>
+                </div>
+
+                <div style={styles.buttonGroup}>
+                  <button onClick={handleSaveUrls} style={styles.saveButton}>
+                    💾 Save URLs
+                  </button>
+                  <button onClick={handleLoadUrls} style={styles.loadButton}>
+                    📂 Load URLs
+                  </button>
                 </div>
               </div>
             )}
@@ -431,5 +483,33 @@ const styles = {
     borderRadius: '4px',
     cursor: 'pointer',
     fontSize: '0.95rem',
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: '1rem',
+    marginTop: '1.5rem',
+    justifyContent: 'center',
+  },
+  saveButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#4caf50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    transition: 'background-color 0.2s',
+  },
+  loadButton: {
+    padding: '0.75rem 1.5rem',
+    backgroundColor: '#2196f3',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    transition: 'background-color 0.2s',
   },
 };
