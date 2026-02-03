@@ -216,14 +216,19 @@ class TaxRefundAPI {
       return false;
     }
 
-    if (response.status && ['success', 'error'].includes(response.status)) {
+    // Check for valid status field
+    const hasValidStatus = response.status && ['success', 'error'].includes(response.status);
+
+    if (hasValidStatus) {
+      console.log('[TaxRefundAPI] Response validation passed. Status:', response.status);
       return true;
     }
 
-    console.log('[TaxRefundAPI] Response validation failed. Response structure:', {
+    console.log('[TaxRefundAPI] Response validation failed. Expected status field with "success" or "error". Received:', {
       hasStatus: !!response.status,
       statusValue: response.status,
-      keys: Object.keys(response),
+      responseKeys: Object.keys(response || {}),
+      responsePreview: JSON.stringify(response).substring(0, 200),
     });
     return false;
   }
