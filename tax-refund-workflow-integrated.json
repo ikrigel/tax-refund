@@ -130,7 +130,8 @@
     {
       "parameters": {
         "responseCode": 200,
-        "responseBody": "={{ $json.response }}"
+        "responseBody": "={{ $json.response }}",
+        "options": {}
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,

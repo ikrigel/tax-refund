@@ -81,12 +81,21 @@ class TaxRefundAPI {
 
       let data = await response.json();
 
+      console.log('[TaxRefundAPI] Raw response:', JSON.stringify(data).substring(0, 200));
+
       // Handle n8n array wrapper - if response is array with single item, unwrap it
-      if (Array.isArray(data) && data.length > 0 && data[0].response) {
-        data = data[0].response;
+      if (Array.isArray(data) && data.length > 0) {
+        console.log('[TaxRefundAPI] Response is array, checking for wrapper...');
+        if (data[0].response) {
+          console.log('[TaxRefundAPI] Found response property, unwrapping...');
+          data = data[0].response;
+        } else if (data[0].status) {
+          console.log('[TaxRefundAPI] Found status at [0], using first item...');
+          data = data[0];
+        }
       }
 
-      console.log('[TaxRefundAPI] Received data:', data);
+      console.log('[TaxRefundAPI] Processed data:', data);
       return data;
     } catch (error) {
       if (error instanceof TypeError) {
@@ -202,7 +211,21 @@ class TaxRefundAPI {
    * Validate response structure
    */
   isValidResponse(response) {
-    return response?.status && ['success', 'error'].includes(response.status);
+    if (!response) {
+      console.log('[TaxRefundAPI] Response is null or undefined');
+      return false;
+    }
+
+    if (response.status && ['success', 'error'].includes(response.status)) {
+      return true;
+    }
+
+    console.log('[TaxRefundAPI] Response validation failed. Response structure:', {
+      hasStatus: !!response.status,
+      statusValue: response.status,
+      keys: Object.keys(response),
+    });
+    return false;
   }
 
   /**
