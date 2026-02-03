@@ -64,7 +64,7 @@
             {
               "id": "extract_text",
               "name": "response_text",
-              "value": "={{ typeof $json.output === 'string' ? $json.output : JSON.stringify($json.output) }}",
+              "value": "={{ $json.candidates?.[0]?.content?.parts?.[0]?.text || '' }}",
               "type": "string"
             }
           ]
@@ -88,7 +88,7 @@
             {
               "id": "parse",
               "name": "data",
-              "value": "={{ JSON.parse($json.response_text) }}",
+              "value": "={{ JSON.parse($json.output) }}",
               "type": "object"
             }
           ]
