@@ -30,16 +30,36 @@
     },
     {
       "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "prepare_body",
+              "name": "gemini_body",
+              "value": "={{ { contents: [ { parts: [ { text: 'Extract all data from this Israeli Form 106 (טופס 106) tax document and return ONLY valid JSON with these fields: tax_year, employee_name, employee_id, employer_name, employer_id, total_income, total_tax_paid, tax_credit_points, work_months. Use null for missing fields. Return ONLY the JSON object, no other text.\\n\\nDocument text:\\n' + ($json.extractedText || '') } ] } ] } }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [330, -192],
+      "id": "prepare_gemini_body",
+      "name": "Prepare Gemini Body"
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBA5kyL42d_nJaMD5QF8EuhcCloo6e-PdM",
         "sendBody": true,
         "bodyType": "json",
-        "body": "={{ JSON.stringify({ contents: [ { parts: [ { text: 'Extract all data from this Israeli Form 106 (טופס 106) tax document and return ONLY valid JSON with these fields: tax_year, employee_name, employee_id, employer_name, employer_id, total_income, total_tax_paid, tax_credit_points, work_months. Use null for missing fields. Return ONLY the JSON object, no other text.\\n\\nDocument text:\\n' + $json.extractedText } ] } ] }) }}",
+        "body": "={{ $json.gemini_body }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
-      "position": [380, -192],
+      "position": [430, -192],
       "id": "gemini_api",
       "name": "Call Gemini API"
     },
@@ -129,6 +149,17 @@
       ]
     },
     "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Prepare Gemini Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Gemini Body": {
       "main": [
         [
           {
