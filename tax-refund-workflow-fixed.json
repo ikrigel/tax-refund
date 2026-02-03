@@ -4,6 +4,7 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "tax-refund",
+        "responseMode": "responseNode",
         "options": {
           "binaryPropertyName": "file"
         }
@@ -16,27 +17,39 @@
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "value": "models/gemini-2.5-flash",
-          "mode": "list",
-          "cachedResultName": "models/gemini-2.5-flash"
-        },
-        "inputType": "binary",
-        "text": "Analyze this Israeli tax Form 106 (טופס 106) and extract ALL available information in JSON format.\n\nRequired fields:\n- tax_year: The tax year (string)\n- employee_id: Employee ID number (תעודת זהות)\n- employee_name: Full employee name\n- employer_id: Employer ID/company number\n- employer_name: Employer name\n- total_income: Total gross income (הכנסה ברוטו)\n- total_tax_paid: Total tax deducted (מס שנוכה)\n\nAdditional fields (extract if available):\n- tax_credit_points: Number of tax credit points (נקודות זיכוי)\n- monthly_income: Array of monthly income amounts\n- national_insurance: National insurance payments (ביטוח לאומי)\n- health_insurance: Health insurance payments (ביטוח בריאות)\n- pension_employee: Employee pension contributions (פנסיה - עובד)\n- pension_employer: Employer pension contributions (פנסיה - מעסיק)\n- training_fund: Training fund contributions (קרן השתלמות)\n- severance_fund: Severance fund (פיצויים)\n- work_days: Number of work days\n- work_months: Number of work months\n- address: Employee address\n- phone: Phone number\n\nReturn ONLY valid JSON. If a field is not found, use null. Do not add explanations.",
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyBA5kyL42d_nJaMD5QF8EuhcCloo6e-PdM",
+        "sendBody": true,
+        "bodyType": "json",
+        "body": "={{ JSON.stringify({ contents: [ { parts: [ { inline_data: { mime_type: 'application/pdf', data: Buffer.from($binary.file.data).toString('base64') } }, { text: 'Extract all data from this Israeli Form 106 (טופס 106) tax document and return ONLY valid JSON with these fields: tax_year, employee_name, employee_id, employer_name, employer_id, total_income, total_tax_paid, tax_credit_points, work_months, national_insurance, health_insurance, pension_employee, pension_employer, training_fund, severance_fund, work_days, monthly_income, address, phone. Use null for missing fields. Return ONLY the JSON object, no other text.' } ] } ] }) }}",
         "options": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.googleGemini",
-      "typeVersion": 1.1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
       "position": [0, 0],
       "id": "gemini_analyze_document",
-      "name": "ניתוח_וחילוץ_נתונים_מטופס_106",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "{{GOOGLE_GEMINI_CRED_ID}}",
-          "name": "Google Gemini API"
-        }
-      }
+      "name": "ניתוח_וחילוץ_נתונים_מטופס_106"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "extract_text",
+              "name": "response_text",
+              "value": "={{ $json.candidates?.[0]?.content?.parts?.[0]?.text || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [100, 0],
+      "id": "extract_gemini_text",
+      "name": "Extract Response Text"
     },
     {
       "parameters": {
@@ -46,7 +59,7 @@
             {
               "id": "parse_json",
               "name": "extracted_data",
-              "value": "={{ JSON.parse($json.response || $json.text || '{}') }}",
+              "value": "={{ JSON.parse($json.response_text || '{}') }}",
               "type": "object"
             }
           ]
@@ -240,6 +253,9 @@
       "main": [[{"node": "ניתוח_וחילוץ_נתונים_מטופס_106", "type": "main", "index": 0}]]
     },
     "ניתוח_וחילוץ_נתונים_מטופס_106": {
+      "main": [[{"node": "Extract Response Text", "type": "main", "index": 0}]]
+    },
+    "Extract Response Text": {
       "main": [[{"node": "המרת_תשובת_AI_ל_JSON", "type": "main", "index": 0}]]
     },
     "המרת_תשובת_AI_ל_JSON": {

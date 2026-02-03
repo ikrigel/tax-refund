@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useTaxRefund } from './hooks/useTaxRefund.js';
+import { useSettings } from './hooks/useSettings.js';
 import { FileUpload } from './components/FileUpload.jsx';
 import { ResultsDisplay } from './components/ResultsDisplay.jsx';
 import { ErrorDisplay } from './components/ErrorDisplay.jsx';
 import { LoadingSpinner } from './components/LoadingSpinner.jsx';
+import { SettingsPanel } from './components/SettingsPanel.jsx';
 
 /**
  * Main application component
@@ -11,7 +13,9 @@ import { LoadingSpinner } from './components/LoadingSpinner.jsx';
  */
 function App() {
   const { loading, success, error, data, fileName, submitForm, clearResults } = useTaxRefund();
+  const { settings, updateSettings, isLoaded } = useSettings();
   const isDev = process.env.NODE_ENV === 'development';
+  const [showSettings, setShowSettings] = useState(false);
 
   const handleFileSubmit = async (file) => {
     await submitForm(file);
@@ -21,12 +25,32 @@ function App() {
     clearResults();
   };
 
+  const handleSettingsOpen = () => {
+    setShowSettings(true);
+  };
+
+  const handleSettingsClose = () => {
+    setShowSettings(false);
+  };
+
   return (
     <div style={styles.app}>
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          <h1 style={styles.appTitle}>📋 מערכת חילוץ טופס 106</h1>
-          <p style={styles.appSubtitle}>🐕🐈 פולו ומרקו אוהבים מיסים🐈🐕</p>
+          <div style={styles.headerTop}>
+            <div>
+              <h1 style={styles.appTitle}>📋 מערכת חילוץ טופס 106</h1>
+              <p style={styles.appSubtitle}>🐕🐈 פולו ומרקו אוהבים מיסים🐈🐕</p>
+            </div>
+            <button
+              onClick={handleSettingsOpen}
+              style={styles.settingsButton}
+              aria-label="Open settings"
+              title="Open settings"
+            >
+              ⚙️
+            </button>
+          </div>
         </div>
       </header>
 
@@ -98,6 +122,15 @@ function App() {
           © 2024 מערכת חילוץ טופס 106 | טכנולוגיות n8n ו-React
         </p>
       </footer>
+
+      {/* Settings Panel Modal */}
+      {isLoaded && showSettings && (
+        <SettingsPanel
+          settings={settings}
+          onUpdateSettings={updateSettings}
+          onClose={handleSettingsClose}
+        />
+      )}
     </div>
   );
 }
@@ -120,6 +153,21 @@ const styles = {
   headerContent: {
     maxWidth: '1200px',
     margin: '0 auto',
+  },
+  headerTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '1rem',
+  },
+  settingsButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    cursor: 'pointer',
+    padding: '0.5rem',
+    color: 'white',
+    transition: 'transform 0.2s',
   },
   appTitle: {
     margin: '0 0 0.5rem 0',
