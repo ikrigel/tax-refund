@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 const DEFAULT_SETTINGS = {
   provider: 'n8n', // 'n8n', 'perplexity', 'claude'
@@ -30,55 +30,68 @@ export function useSettings() {
 
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem(STORAGE_KEY);
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        setSettings({ ...DEFAULT_SETTINGS, ...parsed });
-      } catch (err) {
-        console.error('Failed to parse saved settings:', err);
+    const loadSettings = () => {
+      const savedSettings = localStorage.getItem(STORAGE_KEY);
+      if (savedSettings) {
+        try {
+          const parsed = JSON.parse(savedSettings);
+          // Deep merge to ensure we have all settings
+          const merged = { ...DEFAULT_SETTINGS, ...parsed };
+          setSettings(merged);
+        } catch (err) {
+          console.error('Failed to parse saved settings:', err);
+          setSettings(DEFAULT_SETTINGS);
+        }
+      } else {
         setSettings(DEFAULT_SETTINGS);
       }
-    }
-    setIsLoaded(true);
+      setIsLoaded(true);
+    };
+
+    loadSettings();
   }, []);
 
   // Save settings to localStorage whenever they change
-  const updateSettings = (newSettings) => {
-    setSettings(newSettings);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
-  };
+  const updateSettings = useCallback((newSettings) => {
+    // Ensure new settings object is created for React to detect change
+    const mergedSettings = { ...DEFAULT_SETTINGS, ...newSettings };
+    setSettings(mergedSettings);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSettings));
+  }, []);
 
   // Update a specific provider's settings
-  const updateProvider = (providerName, updates) => {
-    const updated = {
-      ...settings,
-      [providerName]: {
-        ...settings[providerName],
-        ...updates,
-      },
-    };
-    updateSettings(updated);
-  };
+  const updateProvider = useCallback((providerName, updates) => {
+    setSettings(prevSettings => {
+      const updated = {
+        ...prevSettings,
+        [providerName]: {
+          ...prevSettings[providerName],
+          ...updates,
+        },
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   // Switch the active provider
-  const switchProvider = (providerName) => {
+  const switchProvider = useCallback((providerName) => {
     updateSettings({ ...settings, provider: providerName });
-  };
+  }, [settings, updateSettings]);
 
   // Get current active provider settings
-  const getActiveProvider = () => {
+  const getActiveProvider = useCallback(() => {
     return {
       name: settings.provider,
       config: settings[settings.provider],
     };
-  };
+  }, [settings]);
 
   // Reset all settings to defaults
-  const resetSettings = () => {
+  const resetSettings = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setSettings(DEFAULT_SETTINGS);
-  };
+  }, []);
 
   return {
     settings,
@@ -90,3 +103,4 @@ export function useSettings() {
     isLoaded,
   };
 }
+

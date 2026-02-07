@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getTheme } from '../utils/theme';
 import { useSettings } from './useSettings';
 
@@ -12,9 +12,11 @@ import { useSettings } from './useSettings';
 export function useTheme() {
   const { settings } = useSettings();
   const [resolvedTheme, setResolvedTheme] = useState('light');
+  const [themeVersion, setThemeVersion] = useState(0);
 
+  // Handle theme resolution
   useEffect(() => {
-    const themePref = settings.theme || 'auto';
+    const themePref = settings?.theme || 'auto';
 
     if (themePref === 'auto') {
       // Detect system preference
@@ -33,10 +35,16 @@ export function useTheme() {
       // Cleanup
       return () => mediaQuery.removeEventListener('change', handleChange);
     } else {
-      // Use explicit setting
-      setResolvedTheme(themePref);
+      // Use explicit setting - directly set the theme
+      setResolvedTheme(themePref === 'dark' ? 'dark' : 'light');
     }
-  }, [settings.theme]);
 
-  return getTheme(resolvedTheme);
+    // Increment version to ensure dependent components re-render
+    setThemeVersion(v => v + 1);
+  }, [settings?.theme]);
+
+  // Get the theme object
+  const theme = getTheme(resolvedTheme);
+
+  return theme;
 }
