@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTaxRefund } from './hooks/useTaxRefund.js';
 import { useSettings } from './hooks/useSettings.js';
+import { useTheme } from './hooks/useTheme.js';
 import { FileUpload } from './components/FileUpload.jsx';
 import { ResultsDisplay } from './components/ResultsDisplay.jsx';
 import { ErrorDisplay } from './components/ErrorDisplay.jsx';
@@ -14,6 +15,7 @@ import { SettingsPanel } from './components/SettingsPanel.jsx';
 function App() {
   const { loading, success, error, data, fileName, submitForm, clearResults } = useTaxRefund();
   const { settings, updateSettings, isLoaded } = useSettings();
+  const theme = useTheme();
   const isDev = process.env.NODE_ENV === 'development';
   const [showSettings, setShowSettings] = useState(false);
 
@@ -32,6 +34,8 @@ function App() {
   const handleSettingsClose = () => {
     setShowSettings(false);
   };
+
+  const styles = createStyles(theme);
 
   return (
     <div style={styles.app}>
@@ -135,128 +139,131 @@ function App() {
   );
 }
 
-const styles = {
-  app: {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
-    backgroundColor: '#fafafa',
-  },
-  header: {
-    backgroundColor: '#1976d2',
-    color: 'white',
-    padding: '2rem',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    direction: 'rtl',
-    textAlign: 'right',
-  },
-  headerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
-  headerTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '1rem',
-  },
-  settingsButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '1.5rem',
-    cursor: 'pointer',
-    padding: '0.5rem',
-    color: 'white',
-    transition: 'transform 0.2s',
-  },
-  appTitle: {
-    margin: '0 0 0.5rem 0',
-    fontSize: '2rem',
-    fontWeight: 'bold',
-  },
-  appSubtitle: {
-    margin: 0,
-    fontSize: '1rem',
-    opacity: 0.9,
-  },
-  main: {
-    flex: 1,
-    padding: '2rem',
-    direction: 'rtl',
-  },
-  container: {
-    maxWidth: '900px',
-    margin: '0 auto',
-  },
-  section: {
-    marginBottom: '2rem',
-    textAlign: 'right',
-  },
-  sectionTitle: {
-    color: '#1976d2',
-    fontSize: '1.5rem',
-    marginBottom: '1rem',
-    borderBottom: '3px solid #1976d2',
-    paddingBottom: '0.5rem',
-  },
-  description: {
-    color: '#666',
-    lineHeight: '1.6',
-    fontSize: '1.05rem',
-  },
-  contentSection: {
-    padding: '2rem',
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    marginBottom: '2rem',
-  },
-  infoSection: {
-    padding: '1.5rem',
-    backgroundColor: '#e3f2fd',
-    borderLeft: '4px solid #1976d2',
-    borderRadius: '4px',
-    marginBottom: '1.5rem',
-    textAlign: 'right',
-  },
-  infoTitle: {
-    margin: '0 0 1rem 0',
-    color: '#1976d2',
-    fontSize: '1.1rem',
-  },
-  infoList: {
-    margin: 0,
-    paddingRight: '1.5rem',
-    color: '#333',
-    lineHeight: '1.8',
-  },
-  supportSection: {
-    padding: '1.5rem',
-    backgroundColor: '#f3e5f5',
-    borderLeft: '4px solid #7c4dff',
-    borderRadius: '4px',
-    textAlign: 'right',
-  },
-  supportTitle: {
-    margin: '0 0 1rem 0',
-    color: '#7c4dff',
-    fontSize: '1.1rem',
-  },
-  supportText: {
-    margin: '0.5rem 0',
-    color: '#333',
-  },
-  footer: {
-    backgroundColor: '#333',
-    color: 'white',
-    textAlign: 'center',
-    padding: '1.5rem',
-    marginTop: 'auto',
-  },
-  footerText: {
-    margin: 0,
-    fontSize: '0.9rem',
-  },
-};
+function createStyles(theme) {
+  return {
+    app: {
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+      backgroundColor: theme.bg.app,
+    },
+    header: {
+      backgroundColor: theme.special.header,
+      color: theme.text.inverted,
+      padding: '2rem',
+      boxShadow: theme.shadow.md,
+      direction: 'rtl',
+      textAlign: 'right',
+    },
+    headerContent: {
+      maxWidth: '1200px',
+      margin: '0 auto',
+    },
+    headerTop: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: '1rem',
+    },
+    settingsButton: {
+      background: 'none',
+      border: 'none',
+      fontSize: '1.5rem',
+      cursor: 'pointer',
+      padding: '0.5rem',
+      color: theme.text.inverted,
+      transition: 'transform 0.2s',
+    },
+    appTitle: {
+      margin: '0 0 0.5rem 0',
+      fontSize: '2rem',
+      fontWeight: 'bold',
+    },
+    appSubtitle: {
+      margin: 0,
+      fontSize: '1rem',
+      opacity: 0.9,
+    },
+    main: {
+      flex: 1,
+      padding: '2rem',
+      direction: 'rtl',
+      backgroundColor: theme.bg.app,
+    },
+    container: {
+      maxWidth: '900px',
+      margin: '0 auto',
+    },
+    section: {
+      marginBottom: '2rem',
+      textAlign: 'right',
+    },
+    sectionTitle: {
+      color: theme.accent.primary,
+      fontSize: '1.5rem',
+      marginBottom: '1rem',
+      borderBottom: `3px solid ${theme.accent.primary}`,
+      paddingBottom: '0.5rem',
+    },
+    description: {
+      color: theme.text.secondary,
+      lineHeight: '1.6',
+      fontSize: '1.05rem',
+    },
+    contentSection: {
+      padding: '2rem',
+      backgroundColor: theme.bg.primary,
+      borderRadius: '8px',
+      boxShadow: theme.shadow.sm,
+      marginBottom: '2rem',
+    },
+    infoSection: {
+      padding: '1.5rem',
+      backgroundColor: theme.accent.infoBg,
+      borderLeft: `4px solid ${theme.accent.primary}`,
+      borderRadius: '4px',
+      marginBottom: '1.5rem',
+      textAlign: 'right',
+    },
+    infoTitle: {
+      margin: '0 0 1rem 0',
+      color: theme.accent.primary,
+      fontSize: '1.1rem',
+    },
+    infoList: {
+      margin: 0,
+      paddingRight: '1.5rem',
+      color: theme.text.primary,
+      lineHeight: '1.8',
+    },
+    supportSection: {
+      padding: '1.5rem',
+      backgroundColor: theme.accent.purpleBg,
+      borderLeft: `4px solid ${theme.accent.purple}`,
+      borderRadius: '4px',
+      textAlign: 'right',
+    },
+    supportTitle: {
+      margin: '0 0 1rem 0',
+      color: theme.accent.purple,
+      fontSize: '1.1rem',
+    },
+    supportText: {
+      margin: '0.5rem 0',
+      color: theme.text.primary,
+    },
+    footer: {
+      backgroundColor: theme.special.footer,
+      color: theme.text.inverted,
+      textAlign: 'center',
+      padding: '1.5rem',
+      marginTop: 'auto',
+    },
+    footerText: {
+      margin: 0,
+      fontSize: '0.9rem',
+    },
+  };
+}
 
 export default App;
