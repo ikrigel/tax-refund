@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 
 const DEFAULT_SETTINGS = {
   provider: 'n8n', // 'n8n', 'perplexity', 'claude'
+  theme: 'auto', // 'light', 'dark', 'auto'
+  logLevel: 'INFO', // 'NONE', 'ERROR', 'WARN', 'INFO', 'DEBUG'
   n8n: {
     url: import.meta.env.VITE_WEBHOOK_URL || 'http://localhost:5678/webhook/tax-refund',
     environment: 'production', // 'production' or 'test'

@@ -4,6 +4,8 @@
  * Uses settings from localStorage to determine active provider
  */
 
+import logger from '../utils/logger';
+
 class TaxRefundAPI {
   constructor() {
     this.corsProxy = import.meta.env.VITE_CORS_PROXY || '';
@@ -43,7 +45,7 @@ class TaxRefundAPI {
     const settings = this.getSettings();
     const provider = settings.provider;
 
-    console.log(`[TaxRefundAPI] Using provider: ${provider}`);
+    logger.info('API', `Using provider: ${provider}`, { provider });
 
     switch (provider) {
       case 'n8n':
@@ -63,7 +65,7 @@ class TaxRefundAPI {
   async uploadViaWebhook(file, config) {
     try {
       const url = this.corsProxy ? this.corsProxy + config.url : config.url;
-      console.log('[TaxRefundAPI] Webhook URL:', url);
+      logger.debug('WEBHOOK', 'Webhook URL:', { url });
 
       const response = await fetch(url, {
         method: 'POST',
@@ -81,27 +83,27 @@ class TaxRefundAPI {
 
       let data = await response.json();
 
-      console.log('[TaxRefundAPI] Raw response:', JSON.stringify(data).substring(0, 200));
+      logger.debug('RESPONSE', 'Raw response', { preview: JSON.stringify(data).substring(0, 200) });
 
       // Handle n8n response wrapper - unwrap if needed
       // Case 1: Array wrapper [{ response: {...} }]
       if (Array.isArray(data) && data.length > 0) {
-        console.log('[TaxRefundAPI] Response is array, checking for wrapper...');
+        logger.debug('RESPONSE', 'Response is array, checking for wrapper');
         if (data[0].response) {
-          console.log('[TaxRefundAPI] Found response property in array[0], unwrapping...');
+          logger.debug('RESPONSE', 'Found response property in array[0], unwrapping');
           data = data[0].response;
         } else if (data[0].status) {
-          console.log('[TaxRefundAPI] Found status at array[0], using first item...');
+          logger.debug('RESPONSE', 'Found status at array[0], using first item');
           data = data[0];
         }
       }
       // Case 2: Direct object wrapper { response: {...} }
       else if (data && data.response && !data.status && typeof data.response === 'object') {
-        console.log('[TaxRefundAPI] Found response property at top level, unwrapping...');
+        logger.debug('RESPONSE', 'Found response property at top level, unwrapping');
         data = data.response;
       }
 
-      console.log('[TaxRefundAPI] Processed data:', data);
+      logger.info('RESPONSE', 'Processed data', { data });
       return data;
     } catch (error) {
       if (error instanceof TypeError) {
@@ -218,7 +220,7 @@ class TaxRefundAPI {
    */
   isValidResponse(response) {
     if (!response) {
-      console.log('[TaxRefundAPI] Response is null or undefined');
+      logger.warn('VALIDATION', 'Response is null or undefined');
       return false;
     }
 
@@ -226,11 +228,11 @@ class TaxRefundAPI {
     const hasValidStatus = response.status && ['success', 'error'].includes(response.status);
 
     if (hasValidStatus) {
-      console.log('[TaxRefundAPI] Response validation passed. Status:', response.status);
+      logger.debug('VALIDATION', 'Response validation passed', { status: response.status });
       return true;
     }
 
-    console.log('[TaxRefundAPI] Response validation failed. Expected status field with "success" or "error". Received:', {
+    logger.error('VALIDATION', 'Response validation failed', {
       hasStatus: !!response.status,
       statusValue: response.status,
       responseKeys: Object.keys(response || {}),
