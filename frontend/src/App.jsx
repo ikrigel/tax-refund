@@ -7,6 +7,8 @@ import { ResultsDisplay } from './components/ResultsDisplay.jsx';
 import { ErrorDisplay } from './components/ErrorDisplay.jsx';
 import { LoadingSpinner } from './components/LoadingSpinner.jsx';
 import { SettingsPanel } from './components/SettingsPanel.jsx';
+import { AboutModal } from './components/AboutModal.jsx';
+import { HelpModal } from './components/HelpModal.jsx';
 
 /**
  * Main application component
@@ -18,6 +20,8 @@ function App() {
   const theme = useTheme();
   const isDev = process.env.NODE_ENV === 'development';
   const [showSettings, setShowSettings] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const handleFileSubmit = async (file) => {
     await submitForm(file);
@@ -33,6 +37,22 @@ function App() {
 
   const handleSettingsClose = () => {
     setShowSettings(false);
+  };
+
+  const handleAboutOpen = () => {
+    setShowAbout(true);
+  };
+
+  const handleAboutClose = () => {
+    setShowAbout(false);
+  };
+
+  const handleHelpOpen = () => {
+    setShowHelp(true);
+  };
+
+  const handleHelpClose = () => {
+    setShowHelp(false);
   };
 
   const styles = createStyles(theme);
@@ -108,15 +128,28 @@ function App() {
             </ol>
           </section>
 
-          {/* Support Info */}
+          {/* Support Section */}
           <section style={styles.supportSection}>
-            <h3 style={styles.supportTitle}>❓ שאלות?</h3>
+            <h3 style={styles.supportTitle}>❓ שאלות? צריך עזרה?</h3>
             <p style={styles.supportText}>
-              טופסי 106 תומכים: קובצי PDF בלבד, עד 50MB.
+              כל המידע שאתה צריך זמין בסעיפי העזרה והאודות.
             </p>
-            <p style={styles.supportText}>
-              לשאלות טכניות, בדוק את <code>DEPLOYMENT.md</code>.
-            </p>
+            <div style={styles.buttonGroup}>
+              <button
+                onClick={handleHelpOpen}
+                style={styles.helpButton}
+                aria-label="Open help"
+              >
+                📖 עזרה וש"א
+              </button>
+              <button
+                onClick={handleAboutOpen}
+                style={styles.aboutButton}
+                aria-label="Open about"
+              >
+                📋 אודות המערכת
+              </button>
+            </div>
           </section>
         </div>
       </main>
@@ -135,6 +168,12 @@ function App() {
           onClose={handleSettingsClose}
         />
       )}
+
+      {/* About Modal */}
+      <AboutModal isOpen={showAbout} onClose={handleAboutClose} />
+
+      {/* Help Modal */}
+      <HelpModal isOpen={showHelp} onClose={handleHelpClose} />
     </div>
   );
 }
@@ -251,6 +290,38 @@ function createStyles(theme) {
     supportText: {
       margin: '0.5rem 0',
       color: theme.text.primary,
+    },
+    buttonGroup: {
+      display: 'flex',
+      gap: '1rem',
+      marginTop: '1rem',
+      flexWrap: 'wrap',
+    },
+    helpButton: {
+      flex: 1,
+      minWidth: '150px',
+      padding: '0.75rem 1.5rem',
+      backgroundColor: theme.accent.info,
+      color: theme.text.inverted,
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      fontWeight: '600',
+      transition: 'opacity 0.2s, transform 0.2s',
+    },
+    aboutButton: {
+      flex: 1,
+      minWidth: '150px',
+      padding: '0.75rem 1.5rem',
+      backgroundColor: theme.accent.primary,
+      color: theme.text.inverted,
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      fontWeight: '600',
+      transition: 'opacity 0.2s, transform 0.2s',
     },
     footer: {
       backgroundColor: theme.special.footer,
