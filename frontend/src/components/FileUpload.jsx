@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * File upload component with drag-and-drop support
@@ -8,6 +9,7 @@ export const FileUpload = ({ onSubmit, disabled, fileName }) => {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const theme = useTheme();
 
   const handleFile = (file) => {
     if (!file) return;
@@ -50,6 +52,8 @@ export const FileUpload = ({ onSubmit, disabled, fileName }) => {
       setSelectedFile(null);
     }
   };
+
+  const styles = createStyles(theme);
 
   return (
     <div style={styles.container}>
@@ -98,65 +102,68 @@ export const FileUpload = ({ onSubmit, disabled, fileName }) => {
   );
 };
 
-const styles = {
-  container: {
-    width: '100%',
-    maxWidth: '500px',
-    margin: '0 auto',
-  },
-  dropZone: {
-    border: '2px dashed #ddd',
-    borderRadius: '8px',
-    padding: '2rem',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-  },
-  dropZoneActive: {
-    borderColor: '#2196F3',
-    backgroundColor: '#f0f8ff',
-  },
-  input: {
-    display: 'none',
-  },
-  dragText: {
-    color: '#666',
-    marginBottom: '1rem',
-  },
-  button: {
-    padding: '0.75rem 1.5rem',
-    backgroundColor: '#2196F3',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-  },
-  fileInfo: {
-    marginTop: '1rem',
-    padding: '1rem',
-    backgroundColor: '#f9f9f9',
-    borderRadius: '4px',
-  },
-  fileName: {
-    margin: '0 0 1rem 0',
-    color: '#333',
-    wordBreak: 'break-word',
-  },
-  submitButton: {
-    width: '100%',
-    padding: '0.75rem',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '1rem',
-    fontWeight: 'bold',
-  },
-  uploadedFile: {
-    marginTop: '1rem',
-    color: '#666',
-  },
-};
+function createStyles(theme) {
+  return {
+    container: {
+      width: '100%',
+      maxWidth: '500px',
+      margin: '0 auto',
+    },
+    dropZone: {
+      border: `2px dashed ${theme.border.dashed}`,
+      borderRadius: '8px',
+      padding: '2rem',
+      textAlign: 'center',
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      backgroundColor: theme.bg.primary,
+    },
+    dropZoneActive: {
+      borderColor: theme.accent.primary,
+      backgroundColor: theme.accent.dragActive,
+    },
+    input: {
+      display: 'none',
+    },
+    dragText: {
+      color: theme.text.secondary,
+      marginBottom: '1rem',
+    },
+    button: {
+      padding: '0.75rem 1.5rem',
+      backgroundColor: theme.accent.info,
+      color: theme.text.inverted,
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      fontWeight: 'bold',
+    },
+    fileInfo: {
+      marginTop: '1rem',
+      padding: '1rem',
+      backgroundColor: theme.bg.tertiary,
+      borderRadius: '4px',
+    },
+    fileName: {
+      margin: '0 0 1rem 0',
+      color: theme.text.primary,
+      wordBreak: 'break-word',
+    },
+    submitButton: {
+      width: '100%',
+      padding: '0.75rem',
+      backgroundColor: theme.accent.success,
+      color: theme.text.inverted,
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '1rem',
+      fontWeight: 'bold',
+    },
+    uploadedFile: {
+      marginTop: '1rem',
+      color: theme.text.secondary,
+    },
+  };
+}
