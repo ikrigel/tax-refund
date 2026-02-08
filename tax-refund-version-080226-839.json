@@ -112,8 +112,14 @@
             {
               "id": "response",
               "name": "response",
-              "value": "={{ { status: 'success', data: $json.data, extracted_at: new Date().toISOString() } }}",
+              "value": "={{ { status: 'success', data: $json.data, extracted_at: new Date().toISOString()} }}",
               "type": "object"
+            },
+            {
+              "id": "f6c2c565-1e49-430d-ab2e-e66988602304",
+              "name": "refund_calc_without_ai",
+              "value": "={{ $('Calculated answer').item.json.refund_calc_without_ai }}",
+              "type": "number"
             }
           ]
         },
