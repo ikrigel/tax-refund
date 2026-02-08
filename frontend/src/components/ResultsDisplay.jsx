@@ -47,8 +47,8 @@ export const ResultsDisplay = ({ data, extractedAt, onClear }) => {
             <Row label="מס ברוטו משוער" value={formatCurrency(data.gross_tax_estimated)} theme={theme} />
             <Row label="מס נקי משוער" value={formatCurrency(data.net_tax_estimated)} theme={theme} />
             <Row label="הוצאה/החזר משוערים (AI)" value={formatCurrency(data.refund_estimated)} theme={theme} />
-            {data["refund _calc_without_ai"] !== undefined && (
-              <Row label="הוצאה/החזר ידני" value={formatCurrency(data["refund _calc_without_ai"])} theme={theme} />
+            {data.refund_calc_without_ai !== undefined && (
+              <Row label="הוצאה/החזר ידני" value={formatCurrency(data.refund_calc_without_ai)} theme={theme} />
             )}
             {data.refund_direction && (
               <Row
