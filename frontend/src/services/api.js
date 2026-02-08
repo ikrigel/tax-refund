@@ -86,21 +86,43 @@ class TaxRefundAPI {
       logger.debug('RESPONSE', 'Raw response', { preview: JSON.stringify(data).substring(0, 200) });
 
       // Handle n8n response wrapper - unwrap if needed
-      // Case 1: Array wrapper [{ response: {...} }]
+      // Case 1: Array wrapper [{ response: {...}, refund_calc_without_ai: ... }]
       if (Array.isArray(data) && data.length > 0) {
         logger.debug('RESPONSE', 'Response is array, checking for wrapper');
-        if (data[0].response) {
+        const item = data[0];
+
+        // Check if there's a refund_calc_without_ai at the item level
+        const refundCalcWithoutAi = item.refund_calc_without_ai;
+
+        if (item.response) {
           logger.debug('RESPONSE', 'Found response property in array[0], unwrapping');
-          data = data[0].response;
-        } else if (data[0].status) {
+          data = item.response;
+          // Merge refund_calc_without_ai back if it exists
+          if (refundCalcWithoutAi !== undefined) {
+            if (data.data) {
+              data.data.refund_calc_without_ai = refundCalcWithoutAi;
+            } else {
+              data.refund_calc_without_ai = refundCalcWithoutAi;
+            }
+          }
+        } else if (item.status) {
           logger.debug('RESPONSE', 'Found status at array[0], using first item');
-          data = data[0];
+          data = item;
         }
       }
-      // Case 2: Direct object wrapper { response: {...} }
+      // Case 2: Direct object wrapper { response: {...}, refund_calc_without_ai: ... }
       else if (data && data.response && !data.status && typeof data.response === 'object') {
         logger.debug('RESPONSE', 'Found response property at top level, unwrapping');
+        const refundCalcWithoutAi = data.refund_calc_without_ai;
         data = data.response;
+        // Merge refund_calc_without_ai back if it exists
+        if (refundCalcWithoutAi !== undefined) {
+          if (data.data) {
+            data.data.refund_calc_without_ai = refundCalcWithoutAi;
+          } else {
+            data.refund_calc_without_ai = refundCalcWithoutAi;
+          }
+        }
       }
 
       logger.info('RESPONSE', 'Processed data', { data });
